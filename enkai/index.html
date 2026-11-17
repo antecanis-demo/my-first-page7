@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>宴会 仕込み・発注プランナー | 飲食店店主向け</title>
+  <style>
+    :root {
+      --bg-canvas: #f6f5f2;
+      --bg-surface: #ffffff;
+      --bg-subtle: #efede8;
+      --bg-hover: #f9f8f5;
+      --text-primary: #1a1d20;
+      --text-secondary: #525860;
+      --text-muted: #767c84;
+      --border-hairline: #e2dfd7;
+      --border-strong: #c8c4ba;
+      --accent: #1e3a5f;
+      --accent-hover: #152b47;
+      --accent-soft: #eef3f8;
+      --status-ok-text: #14532d;
+      --status-ok-bg: #eef7f1;
+      --status-ok-border: #bbf7d0;
+      --status-warn-text: #92400e;
+      --status-warn-bg: #fef7e6;
+      --status-warn-border: #fde68a;
+      --status-urgent-text: #991b1b;
+      --status-urgent-bg: #fef2f2;
+      --status-urgent-border: #fecaca;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(26, 29, 32, 0.04);
+      --transition: 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      font-feature-settings: "palt" 1;
+    }
+
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    button, input, select {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Top Header */
+    .topbar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-hairline);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .topbar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color var(--transition), border-color var(--transition), transform var(--transition);
+    }
+
+    .btn:hover {
+      background: var(--bg-subtle);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-ghost {
+      border-color: transparent;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 16px 56px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (min-width: 960px) {
+      .topbar-inner {
+        padding: 14px 24px;
+      }
+      .container {
+        padding: 24px 24px 64px;
+        grid-template-columns: 370px 1fr;
+        gap: 24px;
+      }
+      .control-panel {
+        position: sticky;
+        top: 76px;
+      }
+    }
+
+    /* Cards */
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .panel-section {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .panel-section:last-child {
+      border-bottom: none;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .section-hint {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    /* Guest Stepper & Slider */
+    .guest-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stepper-btn {
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color var(--transition), transform var(--transition);
+    }
+
+    .stepper-btn:hover {
+      background: var(--bg-subtle);
+    }
+
+    .stepper-btn:active {
+      transform: scale(0.96);
+    }
+
+    .guest-input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      padding: 0 12px;
+      min-height: 44px;
+    }
+
+    .guest-input-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.14);
+    }
+
+    .guest-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .guest-unit {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+
+    .range-slider {
+      width: 100%;
+      height: 28px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      margin: 4px 0 10px;
+    }
+
+    .preset-group {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .preset-btn {
+      min-height: 36px;
+      padding: 6px 4px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color var(--transition), border-color var(--transition), color var(--transition);
+    }
+
+    .preset-btn:hover {
+      border-color: var(--border-strong);
+    }
+
+    .preset-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    /* Date & Time */
+    .datetime-grid {
+      display: grid;
+      grid-template-columns: 1fr 120px;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .field-input {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .quick-days {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    /* Course Selection */
+    .course-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .course-btn {
+      width: 100%;
+      text-align: left;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-surface);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: border-color var(--transition), background-color var(--transition);
+    }
+
+    .course-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-strong);
+    }
+
+    .course-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .course-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .course-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .course-price {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .course-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Modifiers */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .toggle-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .toggle-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: var(--bg-subtle);
+      padding: 3px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-hairline);
+      flex-shrink: 0;
+    }
+
+    .seg-btn {
+      min-height: 36px;
+      padding: 6px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color var(--transition), color var(--transition);
+    }
+
+    .seg-btn.active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .buffer-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .buffer-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Right Workspace */
+    .workspace {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    /* Summary Strip */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .summary-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .summary-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .summary-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .summary-main {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .summary-sub {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Deadlines Grid */
+    .block-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .block-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .block-note {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .deadline-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    @media (min-width: 640px) {
+      .deadline-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1120px) {
+      .deadline-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .deadline-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .deadline-card.is-warn {
+      border-color: var(--status-warn-border);
+      background: #fffdf7;
+    }
+
+    .deadline-card.is-urgent {
+      border-color: var(--status-urgent-border);
+      background: #fffafa;
+    }
+
+    .vendor-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .deadline-date {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      align-self: flex-start;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .status-ok {
+      color: var(--status-ok-text);
+      background: var(--status-ok-bg);
+      border-color: var(--status-ok-border);
+    }
+
+    .status-warn {
+      color: var(--status-warn-text);
+      background: var(--status-warn-bg);
+      border-color: var(--status-warn-border);
+    }
+
+    .status-urgent {
+      color: var(--status-urgent-text);
+      background: var(--status-urgent-bg);
+      border-color: var(--status-urgent-border);
+    }
+
+    .vendor-rule {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+
+    /* Filter Toolbar */
+    .toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    @media (min-width: 720px) {
+      .toolbar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    .filter-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .filter-tab {
+      min-height: 36px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .filter-tab:hover {
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+    }
+
+    .filter-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      min-height: 36px;
+      padding: 6px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      width: 170px;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    .sort-select {
+      min-height: 36px;
+      padding: 6px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    /* Ingredient Table / Mobile Cards */
+    .prep-list {
+      width: 100%;
+    }
+
+    .prep-table-head {
+      display: none;
+    }
+
+    .prep-row {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-hairline);
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 6px 12px;
+      align-items: start;
+      transition: background-color var(--transition);
+    }
+
+    .prep-row:last-child {
+      border-bottom: none;
+    }
+
+    .prep-row:hover {
+      background: var(--bg-hover);
+    }
+
+    .prep-row.is-checked {
+      background: #fafaf8;
+      opacity: 0.65;
+    }
+
+    .prep-row.is-checked .item-name {
+      text-decoration: line-through;
+    }
+
+    .check-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      min-height: 32px;
+      cursor: pointer;
+    }
+
+    .check-box {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .item-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .item-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .item-name-group {
+      min-width: 0;
+    }
+
+    .item-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .item-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .item-qty-block {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .item-qty {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .item-qty-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .item-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .item-prep-note {
+      color: var(--text-secondary);
+    }
+
+    .item-deadline-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    @media (min-width: 768px) {
+      .prep-table-head {
+        display: grid;
+        grid-template-columns: 40px 1.6fr 1.1fr 1.3fr;
+        gap: 12px;
+        padding: 10px 20px;
+        background: var(--bg-subtle);
+        border-bottom: 1px solid var(--border-hairline);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-secondary);
+      }
+
+      .prep-row {
+        padding: 14px 20px;
+        grid-template-columns: 40px 1.6fr 1.1fr 1.3fr;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .item-body {
+        display: contents;
+      }
+
+      .item-top {
+        display: contents;
+      }
+
+      .item-qty-block {
+        text-align: left;
+      }
+
+      .item-bottom {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding-top: 0;
+      }
+    }
+
+    .empty-state {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Footer note */
+    .footer-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      padding: 0 4px;
+    }
+
+    /* Toast feedback */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1a1d20;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 50;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff;
+        font-size: 12px;
+      }
+      .topbar-actions,
+      .control-panel,
+      .toolbar,
+      .check-wrap,
+      .toast {
+        display: none !important;
+      }
+      .container {
+        display: block;
+        padding: 0;
+      }
+      .panel, .summary-card, .deadline-card {
+        box-shadow: none;
+        border-color: #cccccc;
+      }
+      .prep-row {
+        grid-template-columns: 1.6fr 1fr 1.3fr !important;
+        padding: 8px 12px !important;
+      }
+      .prep-table-head {
+        grid-template-columns: 1.6fr 1fr 1.3fr !important;
+        padding: 8px 12px !important;
+      }
+      .prep-table-head span:first-child {
+        display: none;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand-sub {
+        display: none;
+      }
+      .topbar-actions .btn-label-hide-xs {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1 class="brand-title">宴会 仕込み・発注プランナー</h1>
+        <span class="brand-sub">団体予約の食材計算と卸締め切り管理</span>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" id="resetChecksBtn" class="btn btn-ghost" title="チェックをすべて外す">
+          チェック初期化
+        </button>
+        <button type="button" id="printBtn" class="btn">
+          印刷
+        </button>
+        <button type="button" id="copyBtn" class="btn btn-primary">
+          メモをコピー
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 左パネル: 予約条件の入力 -->
+    <aside class="panel control-panel" aria-label="予約条件の設定">
+      <section class="panel-section">
+        <div class="section-label">
+          <span>1. 予約人数</span>
+          <span class="section-hint tabular" id="guestRangeHint">2〜100名</span>
+        </div>
+
+        <div class="guest-row">
+          <button type="button" class="stepper-btn" data-step="-5" aria-label="5名減らす">-5</button>
+          <button type="button" class="stepper-btn" data-step="-1" aria-label="1名減らす">-1</button>
+          <label class="guest-input-wrap" for="guestInput">
+            <input type="number" id="guestInput" class="guest-input tabular" min="2" max="100" value="18" inputmode="numeric" />
+            <span class="guest-unit">名</span>
+          </label>
+          <button type="button" class="stepper-btn" data-step="1" aria-label="1名増やす">+1</button>
+          <button type="button" class="stepper-btn" data-step="5" aria-label="5名増やす">+5</button>
+        </div>
+
+        <input type="range" id="guestSlider" class="range-slider" min="2" max="80" step="1" value="18" aria-label="人数のスライダー" />
+
+        <div class="preset-group" role="group" aria-label="よく使う人数">
+          <button type="button" class="preset-btn" data-guests="8">8名</button>
+          <button type="button" class="preset-btn" data-guests="12">12名</button>
+          <button type="button" class="preset-btn active" data-guests="18">18名</button>
+          <button type="button" class="preset-btn" data-guests="25">25名</button>
+          <button type="button" class="preset-btn" data-guests="40">40名</button>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-label">
+          <span>2. 宴会の日時</span>
+          <span class="section-hint" id="daysUntilLabel"></span>
+        </div>
+
+        <div class="datetime-grid">
+          <input type="date" id="dateInput" class="field-input tabular" aria-label="宴会日" />
+          <select id="timeInput" class="field-input tabular" aria-label="開始時刻">
+            <option value="17:00">17:00</option>
+            <option value="17:30">17:30</option>
+            <option value="18:00">18:00</option>
+            <option value="18:30" selected>18:30</option>
+            <option value="19:00">19:00</option>
+            <option value="19:30">19:30</option>
+            <option value="20:00">20:00</option>
+          </select>
+        </div>
+
+        <div class="quick-days" role="group" aria-label="日程クイック選択">
+          <button type="button" class="preset-btn" data-offset-days="2">2日後</button>
+          <button type="button" class="preset-btn" data-offset-days="4">4日後</button>
+          <button type="button" class="preset-btn" data-offset-days="7">1週間後</button>
+          <button type="button" class="preset-btn" data-offset-days="14">2週間後</button>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-label">
+          <span>3. 宴会コース</span>
+          <span class="section-hint">タップで切り替え</span>
+        </div>
+        <div class="course-list" id="courseList" role="radiogroup" aria-label="宴会コース選択"></div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-label">
+          <span>4. 飲み放題・仕込み予備率</span>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-title">2時間飲み放題</div>
+            <div class="toggle-desc">樽生・レモン・氷等の発注を表示</div>
+          </div>
+          <div class="segmented" role="group" aria-label="飲み放題の有無">
+            <button type="button" class="seg-btn active" data-drink="on">あり</button>
+            <button type="button" class="seg-btn" data-drink="off">なし</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="buffer-header">
+            <span class="toggle-title">仕込み予備（歩留まり・追加分）</span>
+            <span class="buffer-value tabular" id="bufferDisplay">+10%</span>
+          </div>
+          <input type="range" id="bufferSlider" class="range-slider" min="0" max="20" step="5" value="10" aria-label="仕込み予備率スライダー" />
+          <div class="toggle-desc">急な1〜2名の増員やトリミングロスに備える補正値です。</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- 右ワークスペース: 計算結果と締め切り -->
+    <div class="workspace">
+      <!-- サマリーカード -->
+      <section class="summary-grid" aria-label="予約サマリー">
+        <div class="summary-card">
+          <div class="summary-label">対象の宴会プラン</div>
+          <div class="summary-main tabular" id="summaryPlan">-</div>
+          <div class="summary-sub tabular" id="summaryDate">-</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">最も早い卸への発注締め切り</div>
+          <div class="summary-main tabular" id="summaryNextDeadline">-</div>
+          <div class="summary-sub" id="summaryNextVendor">-</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">確認・仕込みチェック進捗</div>
+          <div class="summary-main tabular" id="summaryProgress">0 / 0 項目</div>
+          <div class="summary-sub" id="summarySales">コース料理・飲料の参考売上</div>
+        </div>
+      </section>
+
+      <!-- 卸業者別の締め切り -->
+      <section aria-label="卸業者ごとの発注締め切り">
+        <div class="block-header">
+          <h2 class="block-title">卸業者への発注締め切り</h2>
+          <span class="block-note">市場休市（水・日）や日曜定休を考慮した目安日時</span>
+        </div>
+        <div class="deadline-grid" id="deadlineGrid"></div>
+      </section>
+
+      <!-- 食材ごとの仕込み量と発注目安 -->
+      <section class="panel" aria-label="食材ごとの仕込み量と発注目安">
+        <div class="toolbar">
+          <div class="filter-tabs" id="categoryTabs" role="tablist" aria-label="食材カテゴリ絞り込み"></div>
+          <div class="toolbar-right">
+            <input type="search" id="searchInput" class="search-input" placeholder="食材名で絞り込み..." aria-label="食材名で検索" />
+            <select id="sortSelect" class="sort-select" aria-label="並び替え">
+              <option value="deadline">締切が早い順</option>
+              <option value="category">カテゴリ順</option>
+              <option value="prep">店内仕込み優先</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="prep-table-head" aria-hidden="true">
+          <span>済</span>
+          <span>食材・用途</span>
+          <span>仕込み量の目安（予備込み）</span>
+          <span>卸先・発注締め切り / 下ごしらえ</span>
+        </div>
+
+        <div class="prep-list" id="prepList"></div>
+      </section>
+
+      <p class="footer-note">
+        ※ 仕込み量は標準歩留まり（鮮魚の柵取り・精肉の下処理）と予備率を加味した目安です。チェック状態はご利用のブラウザにのみ一時保存され、外部サーバーへの通信は一切行いません。
+      </p>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // 卸業者マスター（休市・定休日と締切ルール）
+      const VENDORS = {
+        fish: {
+          id: "fish",
+          name: "鮮魚仲卸（市場）",
+          leadDays: 2,
+          cutoffHour: 14,
+          cutoffMin: 0,
+          closedDays: [0, 3], // 0:日曜, 3:水曜（市場休市想定）
+          ruleText: "2営業日前 14:00〆（水・日休市）"
+        },
+        meat: {
+          id: "meat",
+          name: "精肉卸（ミート）",
+          leadDays: 3,
+          cutoffHour: 16,
+          cutoffMin: 0,
+          closedDays: [0], // 日曜定休
+          ruleText: "3営業日前 16:00〆（日曜定休）"
+        },
+        veg: {
+          id: "veg",
+          name: "青果・八百屋",
+          leadDays: 1,
+          cutoffHour: 17,
+          cutoffMin: 0,
+          closedDays: [0],
+          ruleText: "1営業日前 17:00〆（日曜定休）"
+        },
+        drink: {
+          id: "drink",
+          name: "酒販・飲料卸",
+          leadDays: 2,
+          cutoffHour: 15,
+          cutoffMin: 0,
+          closedDays: [0],
+          ruleText: "2営業日前 15:00〆（日曜定休）"
+        },
+        kitchen: {
+          id: "kitchen",
+          name: "店内在庫・自家製仕込み",
+          leadDays: 0,
+          cutoffHour: -3, // 宴会開始3時間前まで等
+          cutoffMin: 0,
+          closedDays: [],
+          ruleText: "前日〜当日開宴3時間前"
+        }
+      };
+
+      // コース定義と食材レシピ（1名あたりの基準量）
+      const COURSES = [
+        {
+          id: "ume",
+          name: "梅｜定番おつまみ宴会",
+          dishes: 7,
+          price: 4000,
+          drinkExtra: 1500,
+          desc: "お造り3種・若鶏唐揚げ・だし巻き・焼きそば等",
+          items: [
+            { id: "maguro", name: "本マグロ赤身（柵）", category: "鮮魚", vendor: "fish", usage: "お造り3種盛り", perGuest: 45, unit: "g", subCalc: { unitSize: 250, unitName: "柵" }, prepNote: "前日仕入れ・当日切り付け" },
+            { id: "salmon", name: "サーモン（柵）", category: "鮮魚", vendor: "fish", usage: "お造り3種盛り", perGuest: 40, unit: "g", subCalc: { unitSize: 300, unitName: "柵" }, prepNote: "当日昼までに柵取り" },
+            { id: "tako", name: "蒸しタコ", category: "鮮魚", vendor: "fish", usage: "お造り3種・酢の物", perGuest: 30, unit: "g", subCalc: { unitSize: 400, unitName: "本" }, prepNote: "当日そぎ切り" },
+            { id: "chicken_thigh", name: "鶏もも肉（角切り）", category: "精肉", vendor: "meat", usage: "名物・若鶏唐揚げ", perGuest: 110, unit: "g", subCalc: { unitSize: 35, unitName: "個" }, prepNote: "前日夜に下味漬け込み" },
+            { id: "cabbage", name: "キャベツ", category: "青果", vendor: "veg", usage: "塩ダレキャベツ・付け合わせ", perGuest: 90, unit: "g", subCalc: { unitSize: 1000, unitName: "玉" }, prepNote: "当日ざく切り・千切り" },
+            { id: "potato", name: "じゃがいも・冷凍ポテト", category: "青果", vendor: "veg", usage: "フライドポテト・サラダ", perGuest: 80, unit: "g", subCalc: { unitSize: 1000, unitName: "kg袋" }, prepNote: "当日仕分け" },
+            { id: "egg", name: "鶏卵（Mサイズ）", category: "店内仕込み", vendor: "kitchen", usage: "出汁巻き玉子", perGuest: 1.2, unit: "個", roundUp: true, prepNote: "当日出汁合わせ・焼き上げ" },
+            { id: "yakisoba", name: "焼きそば麺・豚バラ", category: "精肉", vendor: "meat", usage: "〆の鉄板焼きそば", perGuest: 100, unit: "g", subCalc: { unitSize: 150, unitName: "玉" }, prepNote: "豚バラ40g/人分も同時発注" }
+          ]
+        },
+        {
+          id: "take",
+          name: "竹｜季節の鮮魚と炭火焼き",
+          dishes: 8,
+          price: 5500,
+          drinkExtra: 1500,
+          desc: "鮮魚5種盛り・地鶏炭火焼き・天ぷら・炙り〆鯖寿司",
+          items: [
+            { id: "madai", name: "活〆真鯛（フィーレ）", category: "鮮魚", vendor: "fish", usage: "お造り5種盛り", perGuest: 45, unit: "g", subCalc: { unitSize: 350, unitName: "枚" }, prepNote: "前日塩〆・当日皮引き" },
+            { id: "kanpachi", name: "カンパチ（半身・柵）", category: "鮮魚", vendor: "fish", usage: "お造り5種盛り", perGuest: 45, unit: "g", subCalc: { unitSize: 300, unitName: "柵" }, prepNote: "当日血合い処理・切り付け" },
+            { id: "maguro_chu", name: "本マグロ中トロ（柵）", category: "鮮魚", vendor: "fish", usage: "お造り5種盛り", perGuest: 40, unit: "g", subCalc: { unitSize: 250, unitName: "柵" }, prepNote: "当日切り付け" },
+            { id: "shimesaba", name: "真鯖（〆鯖用）", category: "鮮魚", vendor: "fish", usage: "炙り〆鯖棒寿司", perGuest: 55, unit: "g", subCalc: { unitSize: 300, unitName: "尾" }, prepNote: "前日に塩・酢〆、当日炙り" },
+            { id: "ebi", name: "ブラックタイガー（無頭）", category: "鮮魚", vendor: "fish", usage: "旬菜と海老の天ぷら", perGuest: 1.5, unit: "尾", roundUp: true, prepNote: "当日午前中に背ワタ・腹切り" },
+            { id: "jidori", name: "銘柄鶏もも肉", category: "精肉", vendor: "meat", usage: "炭火柚子胡椒焼き", perGuest: 130, unit: "g", subCalc: { unitSize: 280, unitName: "枚" }, prepNote: "前日カット・塩麹マリネ" },
+            { id: "seasonal_veg", name: "季節野菜（蓮根・舞茸・茄子）", category: "青果", vendor: "veg", usage: "天ぷら盛り合わせ", perGuest: 90, unit: "g", subCalc: { unitSize: 1000, unitName: "kg目安" }, prepNote: "当日開宴2時間前にカット" },
+            { id: "daikon_tsuma", name: "大根・大葉・わさび", category: "青果", vendor: "veg", usage: "刺身の妻・薬味", perGuest: 45, unit: "g", subCalc: { unitSize: 800, unitName: "本相当" }, prepNote: "当日午前中に桂剥き・氷水さらし" },
+            { id: "sushi_rice", name: "寿司飯（白米換算）", category: "店内仕込み", vendor: "kitchen", usage: "〆の棒寿司", perGuest: 70, unit: "g", subCalc: { unitSize: 150, unitName: "合" }, prepNote: "開宴2時間前に炊飯・合わせ酢" }
+          ]
+        },
+        {
+          id: "matsu",
+          name: "松｜黒毛和牛と旬魚会席",
+          dishes: 9,
+          price: 7500,
+          drinkExtra: 1500,
+          desc: "特選お造り・黒毛和牛ステーキ・金目鯛煮付け・土鍋ご飯",
+          items: [
+            { id: "kinmedai", name: "金目鯛（切り身/姿）", category: "鮮魚", vendor: "fish", usage: "金目鯛の煮付け", perGuest: 120, unit: "g", subCalc: { unitSize: 120, unitName: "切" }, prepNote: "前日ウロコ・霜降り処理" },
+            { id: "ootoro", name: "本マグロ（トロ・赤身）", category: "鮮魚", vendor: "fish", usage: "特選お造り盛り", perGuest: 65, unit: "g", subCalc: { unitSize: 250, unitName: "柵" }, prepNote: "当日切り付け" },
+            { id: "uni_ikura", name: "生うに・いくら", category: "鮮魚", vendor: "fish", usage: "先付け・土鍋ご飯仕上げ", perGuest: 20, unit: "g", subCalc: { unitSize: 100, unitName: "箱/パック" }, prepNote: "当日受け取り・冷蔵厳守" },
+            { id: "wagyu", name: "黒毛和牛サーロイン/ミスジ", category: "精肉", vendor: "meat", usage: "黒毛和牛の炭火ステーキ", perGuest: 110, unit: "g", subCalc: { unitSize: 1000, unitName: "kgブロック" }, prepNote: "3日前発注必須・当日常温戻し" },
+            { id: "duck", name: "合鴨ロース", category: "精肉", vendor: "meat", usage: "八寸・治部煮", perGuest: 45, unit: "g", subCalc: { unitSize: 250, unitName: "本" }, prepNote: "前日低温調理・タレ漬け" },
+            { id: "negi_shoga", name: "白髪ねぎ・ごぼう・針生姜", category: "青果", vendor: "veg", usage: "煮付け・ステーキ付け合わせ", perGuest: 65, unit: "g", subCalc: { unitSize: 1000, unitName: "kg目安" }, prepNote: "当日仕込み" },
+            { id: "dashi_kelp", name: "一番出汁（昆布・鰹節）", category: "店内仕込み", vendor: "kitchen", usage: "椀物・土鍋ご飯・煮汁", perGuest: 180, unit: "ml", subCalc: { unitSize: 1000, unitName: "L" }, prepNote: "前日夜水出し・当日朝引き" },
+            { id: "donabe_rice", name: "魚沼産コシヒカリ（精米）", category: "店内仕込み", vendor: "kitchen", usage: "〆の季節土鍋ご飯", perGuest: 85, unit: "g", subCalc: { unitSize: 150, unitName: "合" }, prepNote: "開宴1時間前から浸水" }
+          ]
+        },
+        {
+          id: "nabe",
+          name: "鍋｜特製もつ鍋・鶏水炊き",
+          dishes: 7,
+          price: 5000,
+          drinkExtra: 1500,
+          desc: "お造り2種・国産牛もつ鍋（または水炊き）・〆ちゃんぽん",
+          items: [
+            { id: "motsu", name: "国産牛小腸（下処理済み）", category: "精肉", vendor: "meat", usage: "特製もつ鍋メイン", perGuest: 130, unit: "g", subCalc: { unitSize: 1000, unitName: "kg" }, prepNote: "前日脂調整・湯通し確認" },
+            { id: "chicken_tsukune", name: "鶏つくね・せせり", category: "精肉", vendor: "meat", usage: "鍋の追加具材", perGuest: 60, unit: "g", subCalc: { unitSize: 500, unitName: "パック" }, prepNote: "当日朝につくねタネ仕込み" },
+            { id: "nabe_veg", name: "キャベツ・ニラ・ごぼう・豆腐", category: "青果", vendor: "veg", usage: "鍋野菜盛り", perGuest: 240, unit: "g", subCalc: { unitSize: 1000, unitName: "kg" }, prepNote: "当日カットし卓数分に盛り分け" },
+            { id: "sashimi_2", name: "鮮魚お造り2種（鯛・鰹）", category: "鮮魚", vendor: "fish", usage: "前菜お造り", perGuest: 60, unit: "g", subCalc: { unitSize: 300, unitName: "柵" }, prepNote: "当日切り付け" },
+            { id: "nabe_soup", name: "鍋スープ（鶏ガラ・醤油出汁）", category: "店内仕込み", vendor: "kitchen", usage: "鍋ベース＆追いスープ", perGuest: 320, unit: "ml", subCalc: { unitSize: 1000, unitName: "L" }, prepNote: "前日仕込み・卓数分を計量" },
+            { id: "chanpon", name: "ちゃんぽん麺", category: "店内仕込み", vendor: "kitchen", usage: "〆のちゃんぽん", perGuest: 0.6, unit: "玉", roundUp: true, prepNote: "提供前に軽く下茹で" }
+          ]
+        }
+      ];
+
+      // 飲み放題あり時の飲料系追加アイテム
+      const DRINK_ITEMS = [
+        { id: "draft_beer", name: "生ビール樽（19L換算）", category: "飲料", vendor: "drink", usage: "飲み放題（1人約3杯想定）", perGuest: 1.05, unit: "L", subCalc: { unitSize: 19, unitName: "樽(19L)" }, prepNote: "前日までに予備樽・炭酸ガス残量確認" },
+        { id: "sour_base", name: "甲類焼酎・ウイスキー（割り材用）", category: "飲料", vendor: "drink", usage: "ハイボール・各種サワー", perGuest: 180, unit: "ml", subCalc: { unitSize: 1800, unitName: "本(1.8L)" }, prepNote: "強炭酸水・ウーロン茶在庫も同時確認" },
+        { id: "cut_lemon", name: "生レモン（カット用）", category: "青果", vendor: "veg", usage: "レモンサワー・唐揚げ添え", perGuest: 0.35, unit: "個", roundUp: true, prepNote: "当日開宴前にくし切り" },
+        { id: "ice_cube", name: "かち割り氷", category: "飲料", vendor: "drink", usage: "サワー・ロック・チェイサー", perGuest: 0.35, unit: "kg", roundUp: true, prepNote: "製氷機の満杯確認・不足時は袋氷発注" }
+      ];
+
+      // アプリ状態
+      const state = {
+        guests: 18,
+        dateStr: "",
+        timeStr: "18:30",
+        courseId: "take",
+        hasDrink: true,
+        bufferPct: 10,
+        activeCategory: "すべて",
+        searchQuery: "",
+        sortBy: "deadline",
+        checkedIds: loadCheckedState()
+      };
+
+      // デフォルトの日付（5日後）を設定
+      function formatDateInput(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      const defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 5);
+      state.dateStr = formatDateInput(defaultDate);
+
+      function loadCheckedState() {
+        try {
+          const raw = localStorage.getItem("enkai_checked_v1");
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveCheckedState() {
+        try {
+          localStorage.setItem("enkai_checked_v1", JSON.stringify(state.checkedIds));
+        } catch {
+          // ignore storage errors
+        }
+      }
+
+      // DOM References
+      const els = {
+        guestInput: document.getElementById("guestInput"),
+        guestSlider: document.getElementById("guestSlider"),
+        dateInput: document.getElementById("dateInput"),
+        timeInput: document.getElementById("timeInput"),
+        daysUntilLabel: document.getElementById("daysUntilLabel"),
+        courseList: document.getElementById("courseList"),
+        bufferSlider: document.getElementById("bufferSlider"),
+        bufferDisplay: document.getElementById("bufferDisplay"),
+        summaryPlan: document.getElementById("summaryPlan"),
+        summaryDate: document.getElementById("summaryDate"),
+        summaryNextDeadline: document.getElementById("summaryNextDeadline"),
+        summaryNextVendor: document.getElementById("summaryNextVendor"),
+        summaryProgress: document.getElementById("summaryProgress"),
+        summarySales: document.getElementById("summarySales"),
+        deadlineGrid: document.getElementById("deadlineGrid"),
+        categoryTabs: document.getElementById("categoryTabs"),
+        searchInput: document.getElementById("searchInput"),
+        sortSelect: document.getElementById("sortSelect"),
+        prepList: document.getElementById("prepList"),
+        copyBtn: document.getElementById("copyBtn"),
+        printBtn: document.getElementById("printBtn"),
+        resetChecksBtn: document.getElementById("resetChecksBtn"),
+        toast: document.getElementById("toast")
+      };
+
+      const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+      function getEventDateTime() {
+        const [y, m, d] = state.dateStr.split("-").map(Number);
+        const [hh, mm] = state.timeStr.split(":").map(Number);
+        return new Date(y, (m || 1) - 1, d || 1, hh || 18, mm || 30, 0, 0);
+      }
+
+      // 営業日を考慮して発注締切日時を算出
+      function computeVendorDeadline(vendorKey, eventDate) {
+        const v = VENDORS[vendorKey];
+        if (vendorKey === "kitchen") {
+          const dt = new Date(eventDate.getTime());
+          dt.setHours(dt.getHours() + v.cutoffHour, dt.getMinutes(), 0, 0);
+          return dt;
+        }
+
+        const cursor = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), v.cutoffHour, v.cutoffMin, 0, 0);
+        let remainingBusinessDays = v.leadDays;
+        while (remainingBusinessDays > 0) {
+          cursor.setDate(cursor.getDate() - 1);
+          if (!v.closedDays.includes(cursor.getDay())) {
+            remainingBusinessDays -= 1;
+          }
+        }
+        return cursor;
+      }
+
+      function formatJpDateTime(dt) {
+        const m = dt.getMonth() + 1;
+        const d = dt.getDate();
+        const w = WEEKDAYS[dt.getDay()];
+        const hh = String(dt.getHours()).padStart(2, "0");
+        const mm = String(dt.getMinutes()).padStart(2, "0");
+        return `${m}月${d}日(${w}) ${hh}:${mm}`;
+      }
+
+      function getDeadlineStatus(deadlineDt) {
+        const now = new Date();
+        const diffMs = deadlineDt.getTime() - now.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        if (diffMs < 0) {
+          const pastHours = Math.abs(Math.round(diffHours));
+          const pastLabel = pastHours >= 24 ? `${Math.floor(pastHours / 24)}日超過` : `${pastHours}時間超過`;
+          return {
+            level: "urgent",
+            className: "status-urgent",
+            cardClass: "is-urgent",
+            label: `締切過ぎ（${pastLabel}・要電話）`,
+            diffMs
+          };
+        }
+        if (diffHours <= 24) {
+          const h = Math.max(1, Math.floor(diffHours));
+          return {
+            level: "warn",
+            className: "status-warn",
+            cardClass: "is-warn",
+            label: `まもなく締切（あと${h}時間）`,
+            diffMs
+          };
+        }
+        const days = Math.floor(diffHours / 24);
+        const remHours = Math.floor(diffHours % 24);
+        return {
+          level: "ok",
+          className: "status-ok",
+          cardClass: "",
+          label: `余裕あり（あと${days}日${remHours}時間）`,
+          diffMs
+        };
+      }
+
+      function formatQuantity(item, guests, bufferPct) {
+        const multiplier = guests * (1 + bufferPct / 100);
+        const rawTotal = item.perGuest * multiplier;
+
+        let mainText = "";
+        let subText = "";
+
+        if (item.unit === "g") {
+          const roundedG = Math.ceil(rawTotal / 10) * 10;
+          if (roundedG >= 1000) {
+            mainText = `${(roundedG / 1000).toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1")} kg`;
+          } else {
+            mainText = `${roundedG} g`;
+          }
+          if (item.subCalc) {
+            const count = Math.ceil(roundedG / item.subCalc.unitSize);
+            subText = `目安 約${count}${item.subCalc.unitName}（1人${item.perGuest}g）`;
+          } else {
+            subText = `1人 ${item.perGuest}g`;
+          }
+        } else if (item.unit === "ml") {
+          const roundedMl = Math.ceil(rawTotal / 50) * 50;
+          if (roundedMl >= 1000) {
+            mainText = `${(roundedMl / 1000).toFixed(1).replace(/\.0$/, "")} L`;
+          } else {
+            mainText = `${roundedMl} ml`;
+          }
+          if (item.subCalc) {
+            const count = Math.ceil(roundedMl / item.subCalc.unitSize);
+            subText = `目安 約${count}${item.subCalc.unitName}（1人${item.perGuest}ml）`;
+          }
+        } else if (item.unit === "L") {
+          const liters = Math.ceil(rawTotal * 10) / 10;
+          mainText = `${liters.toFixed(1).replace(/\.0$/, "")} L`;
+          if (item.subCalc) {
+            const count = Math.ceil(liters / item.subCalc.unitSize);
+            subText = `目安 ${count}${item.subCalc.unitName}`;
+          }
+        } else if (item.unit === "kg") {
+          const kg = Math.ceil(rawTotal * 2) / 2;
+          mainText = `${kg.toFixed(1).replace(/\.0$/, "")} kg`;
+          subText = `1人 ${item.perGuest}kg`;
+        } else {
+          const count = item.roundUp ? Math.ceil(rawTotal) : Math.round(rawTotal);
+          mainText = `${count} ${item.unit}`;
+          subText = `1人 ${item.perGuest}${item.unit}`;
+        }
+
+        return { mainText, subText };
+      }
+
+      function getCurrentItems() {
+        const course = COURSES.find((c) => c.id === state.courseId) || COURSES[0];
+        const baseItems = course.items.map((item) => ({ ...item }));
+        if (state.hasDrink) {
+          return baseItems.concat(DRINK_ITEMS.map((item) => ({ ...item })));
+        }
+        return baseItems;
+      }
+
+      function renderCourses() {
+        els.courseList.innerHTML = COURSES.map((c) => {
+          const active = c.id === state.courseId;
+          return `
+            <button type="button" class="course-btn ${active ? "active" : ""}" data-course-id="${c.id}" role="radio" aria-checked="${active}">
+              <div class="course-top">
+                <span class="course-name">${c.name}</span>
+                <span class="course-price tabular">¥${c.price.toLocaleString("ja-JP")} /名</span>
+              </div>
+              <div class="course-meta">全${c.dishes}品 · ${c.desc}</div>
+            </button>
+          `;
+        }).join("");
+      }
+
+      function renderCategoryTabs(items) {
+        const categories = ["すべて", "鮮魚", "精肉", "青果", "飲料", "店内仕込み"];
+        const counts = {};
+        categories.forEach((cat) => {
+          counts[cat] = cat === "すべて" ? items.length : items.filter((i) => i.category === cat).length;
+        });
+
+        if (counts[state.activeCategory] === 0) {
+          state.activeCategory = "すべて";
+        }
+
+        els.categoryTabs.innerHTML = categories
+          .filter((cat) => cat === "すべて" || counts[cat] > 0)
+          .map((cat) => {
+            const active = cat === state.activeCategory;
+            return `
+              <button type="button" class="filter-tab tabular ${active ? "active" : ""}" data-category="${cat}" role="tab" aria-selected="${active}">
+                ${cat} (${counts[cat]})
+              </button>
+            `;
+          })
+          .join("");
+      }
+
+      function renderAll() {
+        const course = COURSES.find((c) => c.id === state.courseId) || COURSES[0];
+        const eventDt = getEventDateTime();
+        const items = getCurrentItems();
+
+        // 人数UI同期
+        els.guestInput.value = state.guests;
+        els.guestSlider.value = Math.min(80, state.guests);
+        document.querySelectorAll("[data-guests]").forEach((btn) => {
+          btn.classList.toggle("active", Number(btn.dataset.guests) === state.guests);
+        });
+
+        // 日時UI同期
+        els.dateInput.value = state.dateStr;
+        els.timeInput.value = state.timeStr;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const eventStart = new Date(eventDt.getFullYear(), eventDt.getMonth(), eventDt.getDate());
+        const diffDays = Math.round((eventStart - todayStart) / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) {
+          els.daysUntilLabel.textContent = "本日開催";
+        } else if (diffDays > 0) {
+          els.daysUntilLabel.textContent = `開催まであと${diffDays}日`;
+        } else {
+          els.daysUntilLabel.textContent = `${Math.abs(diffDays)}日前（過去日）`;
+        }
+        document.querySelectorAll("[data-offset-days]").forEach((btn) => {
+          btn.classList.toggle("active", Number(btn.dataset.offsetDays) === diffDays);
+        });
+
+        // 飲み放題・予備率
+        document.querySelectorAll("[data-drink]").forEach((btn) => {
+          const isOn = btn.dataset.drink === "on";
+          btn.classList.toggle("active", isOn === state.hasDrink);
+        });
+        els.bufferSlider.value = state.bufferPct;
+        els.bufferDisplay.textContent = `+${state.bufferPct}%`;
+
+        // 卸業者ごとの締切算出
+        const vendorKeys = ["fish", "meat", "veg"];
+        if (state.hasDrink) vendorKeys.push("drink");
+
+        const vendorDeadlines = {};
+        Object.keys(VENDORS).forEach((k) => {
+          const dt = computeVendorDeadline(k, eventDt);
+          vendorDeadlines[k] = {
+            vendor: VENDORS[k],
+            dt,
+            formatted: formatJpDateTime(dt),
+            status: getDeadlineStatus(dt)
+          };
+        });
+
+        // 卸締切カード描画
+        const activeVendorCards = vendorKeys
+          .map((k) => ({ key: k, ...vendorDeadlines[k], itemCount: items.filter((i) => i.vendor === k).length }))
+          .filter((entry) => entry.itemCount > 0)
+          .sort((a, b) => a.dt.getTime() - b.dt.getTime());
+
+        els.deadlineGrid.innerHTML = activeVendorCards
+          .map((entry) => `
+            <div class="deadline-card ${entry.status.cardClass}">
+              <div class="vendor-name">${entry.vendor.name} · ${entry.itemCount}品目</div>
+              <div class="deadline-date tabular">${entry.formatted}</div>
+              <span class="status-line ${entry.status.className}">${entry.status.label}</span>
+              <div class="vendor-rule">${entry.vendor.ruleText}</div>
+            </div>
+          `)
+          .join("");
+
+        // サマリー更新
+        els.summaryPlan.textContent = `${state.guests}名 · ${course.name.split("｜")[0]}コース`;
+        els.summaryDate.textContent = `${formatJpDateTime(eventDt)} 開宴 · 予備+${state.bufferPct}%`;
+
+        if (activeVendorCards.length > 0) {
+          const earliest = activeVendorCards[0];
+          els.summaryNextDeadline.textContent = earliest.formatted;
+          els.summaryNextVendor.textContent = `${earliest.vendor.name}（${earliest.status.label}）`;
+        }
+
+        const checkedCount = items.filter((item) => Boolean(state.checkedIds[item.id])).length;
+        const unitPrice = course.price + (state.hasDrink ? course.drinkExtra : 0);
+        const totalSales = unitPrice * state.guests;
+        els.summaryProgress.textContent = `${checkedCount} / ${items.length} 項目確認`;
+        els.summarySales.textContent = `想定売上 ¥${totalSales.toLocaleString("ja-JP")}（@${unitPrice.toLocaleString("ja-JP")}円）`;
+
+        // カテゴリタブ描画
+        renderCategoryTabs(items);
+
+        // フィルタ & ソート
+        const query = state.searchQuery.trim().toLowerCase();
+        let filtered = items.filter((item) => {
+          const catMatch = state.activeCategory === "すべて" || item.category === state.activeCategory;
+          const qMatch = !query || item.name.toLowerCase().includes(query) || item.usage.toLowerCase().includes(query);
+          return catMatch && qMatch;
+        });
+
+        filtered.sort((a, b) => {
+          if (state.sortBy === "deadline") {
+            return vendorDeadlines[a.vendor].dt.getTime() - vendorDeadlines[b.vendor].dt.getTime();
+          }
+          if (state.sortBy === "prep") {
+            if (a.vendor === "kitchen" && b.vendor !== "kitchen") return -1;
+            if (a.vendor !== "kitchen" && b.vendor === "kitchen") return 1;
+            return a.category.localeCompare(b.category, "ja");
+          }
+          return a.category.localeCompare(b.category, "ja");
+        });
+
+        if (filtered.length === 0) {
+          els.prepList.innerHTML = `<div class="empty-state">条件に一致する食材がありません。絞り込み条件を変更してください。</div>`;
+          return;
+        }
+
+        els.prepList.innerHTML = filtered
+          .map((item) => {
+            const qty = formatQuantity(item, state.guests, state.bufferPct);
+            const vd = vendorDeadlines[item.vendor];
+            const checked = Boolean(state.checkedIds[item.id]);
+            return `
+              <div class="prep-row ${checked ? "is-checked" : ""}" data-item-id="${item.id}">
+                <label class="check-wrap" aria-label="${item.name}を確認済みにする">
+                  <input type="checkbox" class="check-box" data-check-id="${item.id}" ${checked ? "checked" : ""} />
+                </label>
+                <div class="item-body">
+                  <div class="item-top">
+                    <div class="item-name-group">
+                      <div class="item-name">${item.name}</div>
+                      <div class="item-meta">${item.category} · ${item.usage}</div>
+                    </div>
+                    <div class="item-qty-block">
+                      <div class="item-qty tabular">${qty.mainText}</div>
+                      <div class="item-qty-sub tabular">${qty.subText}</div>
+                    </div>
+                  </div>
+                  <div class="item-bottom">
+                    <div class="item-deadline-inline">
+                      <span>${vd.vendor.name}</span>
+                      <span class="status-line ${vd.status.className} tabular">${vd.formatted} 〆</span>
+                    </div>
+                    <div class="item-prep-note">仕込み: ${item.prepNote}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      // トースト通知
+      let toastTimer = null;
+      function showToast(msg) {
+        els.toast.textContent = msg;
+        els.toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          els.toast.classList.remove("show");
+        }, 2200);
+      }
+
+      // クリップボード用テキスト生成
+      function buildCopyText() {
+        const course = COURSES.find((c) => c.id === state.courseId) || COURSES[0];
+        const eventDt = getEventDateTime();
+        const items = getCurrentItems();
+        const lines = [
+          `【宴会 仕込み・発注メモ】`,
+          `日時: ${formatJpDateTime(eventDt)} 開宴`,
+          `人数: ${state.guests}名（予備率 +${state.bufferPct}%）`,
+          `コース: ${course.name} / 飲み放題: ${state.hasDrink ? "あり" : "なし"}`,
+          ``,
+          `■ 卸業者ごとの発注締め切り`
+        ];
+
+        const usedVendors = ["fish", "meat", "veg", "drink"].filter((k) => items.some((i) => i.vendor === k));
+        usedVendors.forEach((k) => {
+          const dt = computeVendorDeadline(k, eventDt);
+          const st = getDeadlineStatus(dt);
+          lines.push(`・${VENDORS[k].name}: ${formatJpDateTime(dt)} [${st.label}]`);
+        });
+
+        lines.push(``, `■ 食材別の仕込み量目安`);
+        items.forEach((item) => {
+          const qty = formatQuantity(item, state.guests, state.bufferPct);
+          const dt = computeVendorDeadline(item.vendor, eventDt);
+          const mark = state.checkedIds[item.id] ? "[済]" : "[ ]";
+          lines.push(`${mark} ${item.name}: ${qty.mainText}（${qty.subText}） / ${VENDORS[item.vendor].name} ${formatJpDateTime(dt)}〆`);
+        });
+
+        return lines.join("\n");
+      }
+
+      // イベントリスナー登録
+      document.querySelectorAll("[data-step]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const step = Number(btn.dataset.step);
+          state.guests = Math.max(2, Math.min(100, state.guests + step));
+          renderAll();
+        });
+      });
+
+      els.guestInput.addEventListener("input", () => {
+        const val = parseInt(els.guestInput.value, 10);
+        if (!Number.isNaN(val)) {
+          state.guests = Math.max(2, Math.min(100, val));
+          renderAll();
+        }
+      });
+
+      els.guestInput.addEventListener("blur", () => {
+        const val = parseInt(els.guestInput.value, 10);
+        state.guests = Number.isNaN(val) ? 18 : Math.max(2, Math.min(100, val));
+        renderAll();
+      });
+
+      els.guestSlider.addEventListener("input", () => {
+        state.guests = Number(els.guestSlider.value);
+        renderAll();
+      });
+
+      document.querySelectorAll("[data-guests]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.guests = Number(btn.dataset.guests);
+          renderAll();
+        });
+      });
+
+      els.dateInput.addEventListener("change", () => {
+        if (els.dateInput.value) {
+          state.dateStr = els.dateInput.value;
+          renderAll();
+        }
+      });
+
+      els.timeInput.addEventListener("change", () => {
+        state.timeStr = els.timeInput.value;
+        renderAll();
+      });
+
+      document.querySelectorAll("[data-offset-days]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const offset = Number(btn.dataset.offsetDays);
+          const d = new Date();
+          d.setDate(d.getDate() + offset);
+          state.dateStr = formatDateInput(d);
+          renderAll();
+        });
+      });
+
+      els.courseList.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-course-id]");
+        if (!btn) return;
+        state.courseId = btn.dataset.courseId;
+        renderCourses();
+        renderAll();
+      });
+
+      document.querySelectorAll("[data-drink]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.hasDrink = btn.dataset.drink === "on";
+          renderAll();
+        });
+      });
+
+      els.bufferSlider.addEventListener("input", () => {
+        state.bufferPct = Number(els.bufferSlider.value);
+        renderAll();
+      });
+
+      els.categoryTabs.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-category]");
+        if (!tab) return;
+        state.activeCategory = tab.dataset.category;
+        renderAll();
+      });
+
+      els.searchInput.addEventListener("input", () => {
+        state.searchQuery = els.searchInput.value;
+        renderAll();
+      });
+
+      els.sortSelect.addEventListener("change", () => {
+        state.sortBy = els.sortSelect.value;
+        renderAll();
+      });
+
+      els.prepList.addEventListener("change", (e) => {
+        const checkbox = e.target.closest("[data-check-id]");
+        if (!checkbox) return;
+        const id = checkbox.dataset.checkId;
+        state.checkedIds[id] = checkbox.checked;
+        saveCheckedState();
+        renderAll();
+      });
+
+      els.resetChecksBtn.addEventListener("click", () => {
+        state.checkedIds = {};
+        saveCheckedState();
+        renderAll();
+        showToast("チェックを初期化しました");
+      });
+
+      els.printBtn.addEventListener("click", () => {
+        window.print();
+      });
+
+      els.copyBtn.addEventListener("click", async () => {
+        const text = buildCopyText();
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+          }
+          showToast("仕込み・発注メモをコピーしました");
+        } catch {
+          showToast("コピーに失敗しました（ブラウザ権限をご確認ください）");
+        }
+      });
+
+      // 初期描画
+      renderCourses();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
